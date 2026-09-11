@@ -885,3 +885,17 @@ button,
       left: auto;
       margin: 1em 0 0 0;
       position: relative; } }
+.model-viewer-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 2em;
+    margin: 2em auto;
+}
+
+@media (max-width: 736px) {
+    .model-viewer-row {
+        flex-direction: column;
+    }
+}
