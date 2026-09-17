@@ -890,7 +890,7 @@
   // page load.
   // ---------------------------------------------------------------
   const MUSIC_TARGET_VOLUME = 0.25;
-  const MUSIC_FADE_IN_DELAY_MS = 3000;
+  const MUSIC_FADE_IN_DELAY_MS = 1500;
   const MUSIC_FADE_IN_DURATION_MS = 4000;
   let userAdjustedVolume = false;
   let pausedForVideo = false;
