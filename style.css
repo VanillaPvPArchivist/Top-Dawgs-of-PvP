@@ -1033,8 +1033,8 @@ body.honorable-open .honorable-scene {
 .honorable-video-overlay {
   display: none;
   position: fixed;
-  width: 560px;
-  height: auto;
+  width: min(560px, 32vw);
+  aspect-ratio: 16 / 9;
   z-index: 20;
 }
 
