@@ -1,0 +1,1178 @@
+:root {
+  --parchment: #ece0c4;
+  --gold: #9c7a3c;
+  --gold-bright: #cda65a;
+  --panel-shadow: rgba(0, 0, 0, 0.6);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  /* Dark fallback so a still-loading (or not-yet-cached) background
+     image shows this instead of the browser's default white canvas
+     for the instant before the image paints -- this is what causes
+     the white flash when switching classes. */
+  background-color: #181410;
+}
+
+body {
+  font-family: "Jost", sans-serif;
+  color: var(--parchment);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  /* Neutral placeholder backdrop -- shows until you add a real image
+     for each class below. Not tied to any class color, so it won't be
+     confused with the icon gradients. This still applies to body
+     itself (harmless, fully hidden behind .bg-stage below) so the
+     rules further down don't need to change at all. */
+  background-image:
+    radial-gradient(ellipse at 50% 30%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 75%),
+    linear-gradient(180deg, #211d17 0%, #2c261e 45%, #181410 100%);
+}
+
+/* ----- Background crossfade ----------------------------------------
+   Two full-viewport layers stacked behind everything. JS sets the
+   incoming layer's background-image and toggles the ".visible" class,
+   which fades it in via the opacity transition below while the other
+   layer's ".visible" gets removed at the same time, fading it out. */
+
+.bg-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background-color: #181410;
+}
+
+/* ----- Volume control (top-left, persistent across both scenes) ----- */
+
+.audio-control {
+  position: fixed;
+  bottom: 3vh;
+  left: 3vw;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+}
+
+.audio-btn {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: none;
+  background: rgba(20, 16, 11, 0.65);
+  color: var(--parchment);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.audio-btn:hover {
+  background: rgba(156, 122, 60, 0.28);
+  color: var(--gold-bright);
+}
+
+.audio-panel {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 0;
+  white-space: nowrap;
+  opacity: 0;
+  margin-left: 0;
+  padding: 0;
+  overflow: hidden;
+  background: rgba(20, 16, 11, 0.65);
+  border-radius: 16px;
+  transition: max-width 250ms ease, opacity 200ms ease, margin-left 250ms ease, padding 250ms ease;
+}
+
+.audio-control.open .audio-panel {
+  max-width: 260px;
+  opacity: 1;
+  margin-left: 10px;
+  padding: 4px 6px 4px 12px;
+}
+
+.volume-slider {
+  width: 120px;
+  flex: 0 0 auto;
+  box-sizing: content-box;
+  accent-color: var(--gold-bright);
+}
+
+.audio-pause-btn {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  color: var(--parchment);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.audio-pause-btn:hover {
+  color: var(--gold-bright);
+}
+
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1000ms ease;
+}
+
+.bg-layer.visible {
+  opacity: 1;
+}
+
+/* Invisible -- exists only so JS can read its resolved
+   background-image via getComputedStyle(). Takes no visual space. */
+#bgProbe {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ---- Add your own background image per class AND mode here. Nothing
+   is set by default (every combination currently shows the neutral
+   backdrop above) -- just point background-image at your file. Since
+   backgrounds can differ between "Skill" and "Fun" for the same class,
+   target both attributes together:
+   [data-class="warrior"][data-mode="skill"] {
+     background-image: url("images/warrior-skill.jpg");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="warrior"][data-mode="fun"] {
+     background-image: url("images/warrior-fun.jpg");
+     background-size: cover;
+     background-position: center;
+   }
+   Repeat for: paladin, hunter, rogue, priest, shaman, mage, warlock,
+   druid -- each with a "-skill" and a "-fun" image if you want them to
+   differ. If you only add one rule for a class (say, just "skill"),
+   the "fun" mode for that class will keep showing the neutral backdrop
+   until you add its own rule too.
+
+   For a class/mode with multiple variants (see "variants" in
+   CLASS_DATA -- currently just Shaman/Fun), you can also target a
+   specific variant by adding its slugified name as a third attribute,
+   which takes priority over the plain [data-class][data-mode] rule
+   above since it's more specific:
+   [data-class="shaman"][data-mode="fun"][data-variant="cabbarnuke"] {
+     background-image: url("images/shaman-fun-cabbarnuke.jpg");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="shaman"][data-mode="fun"][data-variant="unbreakable"] {
+     background-image: url("images/shaman-fun-unbreakable.jpg");
+     background-size: cover;
+     background-position: center;
+   }
+   Without these, both variants share whatever [data-class="shaman"]
+   [data-mode="fun"] rule below already provides. ---- */
+[data-class="warrior"][data-mode="skill"] {
+     background-image: url("images/Bobo.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="warrior"][data-mode="fun"] {
+     background-image: url("images/backgroundsnq.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="paladin"][data-mode="skill"] {
+     background-image: url("images/Arthus.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="paladin"][data-mode="fun"] {
+     background-image: url("images/Zalgradis.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="hunter"][data-mode="skill"] {
+     background-image: url("images/Jungelle.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="hunter"][data-mode="fun"] {
+     background-image: url("images/Dysphoria.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="rogue"][data-mode="skill"] {
+     background-image: url("images/Cielz.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="rogue"][data-mode="fun"] {
+     background-image: url("images/Mute.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="priest"][data-mode="skill"] {
+     background-image: url("images/backgroundpriest.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="priest"][data-mode="fun"] {
+     background-image: url("images/beckon.png");
+     background-size: cover;
+     background-position: center;
+   }
+
+   [data-class="shaman"][data-mode="skill"] {
+     background-image: url("images/Nimhabulove.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="shaman"][data-mode="fun"][data-variant="cabbarnuke"] {
+     background-image: url("images/Cabbarnackle.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="shaman"][data-mode="fun"][data-variant="unbreakable"] {
+     background-image: url("images/Unbreakable.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="mage"][data-mode="skill"] {
+     background-image: url("images/Clazzi.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="mage"][data-mode="fun"] {
+     background-image: url("images/Path.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="warlock"][data-mode="skill"] {
+     background-image: url("images/Lokilo.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="warlock"][data-mode="fun"] {
+     background-image: url("images/Drakedog.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="druid"][data-mode="skill"] {
+     background-image: url("images/tfo.png");
+     background-size: cover;
+     background-position: center;
+   }
+   [data-class="druid"][data-mode="fun"] {
+     background-image: url("images/NEVER.png");
+     background-size: cover;
+     background-position: center;
+   }
+.scene {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  width: 100vw;
+  transition: transform 700ms ease;
+}
+
+/* ----- Slide transition between the main scene and Honorable
+   Mentions. Both moves happen together: the main scene slides fully
+   up and out while the honorable scene slides up from below into the
+   same space. ----- */
+
+body.honorable-open .scene {
+  transform: translateY(-100%);
+}
+
+.honorable-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  background-color: #14110d;
+  background-size: cover;
+  background-position: center;
+  background-image: url("images/honorablementions.png");
+  /* ---- To set a background image for this whole scene, add an
+     image and point this at it, e.g.:
+     .honorable-scene {
+       background-image: url("images/honorable-mentions-bg.jpg");
+     }
+     Nothing is set by default, so it just shows the solid dark color
+     above until you add one. This is one image for the whole scene,
+     not per-class like the main screen. ---- */
+  transform: translateY(100%);
+  transition: transform 700ms ease;
+  overflow: hidden;
+}
+
+body.honorable-open .honorable-scene {
+  transform: translateY(0);
+}
+
+/* ----- Left control column: mode toggle + class grid ----- */
+
+.control-column {
+  position: absolute;
+  top: 4vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 6;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-btn {
+  font-family: "Jost", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--parchment);
+  background: rgba(20, 16, 11, 0.55);
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  padding: 8px 20px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 150ms ease, background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.mode-btn:hover { opacity: 0.85; }
+
+.mode-btn.active {
+  opacity: 1;
+  font-weight: 700;
+  background: rgba(156, 122, 60, 0.45);
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+  box-shadow: 0 0 12px 1px rgba(205, 166, 90, 0.55);
+  transform: translateY(-1px);
+}
+
+.class-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: 92vw;
+}
+
+.class-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 66px;
+  height: 72px;
+  padding: 3px 2px 3px;
+  cursor: pointer;
+  opacity: 0.6;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  outline: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.class-btn:focus-visible {
+  outline: 1px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+
+.class-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.class-btn.active {
+  opacity: 1;
+}
+
+/* Icon container -- background removed since real icon images are
+   now used (see index.html). If you ever go back to the SVG
+   placeholders, you can re-add a background here if you want one. */
+.class-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 0;
+  border: 1px solid rgba(210, 212, 218, 0.5);
+}
+
+/* Pulsing glowing border on the currently selected class's icon. */
+.class-btn.active .class-icon {
+  border-color: var(--gold-bright);
+  animation: class-icon-glow 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes class-icon-glow {
+  from {
+    box-shadow: 0 0 4px 1px rgba(205, 166, 90, 0.45);
+  }
+  to {
+    box-shadow: 0 0 10px 3px rgba(205, 166, 90, 0.9);
+  }
+}
+
+/* If you ever add an SVG icon for a class instead of an <img>, add a
+   ".class-icon svg { stroke: var(--gold); fill: none; ... }" rule back
+   here to style it -- removed for now since every class currently
+   uses a real image (see index.html). */
+
+/* If you swap an <svg> for an <img> in index.html, this makes it fill
+   the circle cleanly without stretching. */
+.class-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.class-label {
+  font-family: "Jost", sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-align: center;
+  line-height: 1.15;
+  color: var(--parchment);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.class-btn.active .class-label {
+  color: var(--gold-bright);
+}
+
+/* ----- 3D model stage ----- */
+
+.model-stage {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1120px, 84vw);
+  height: min(1120px, 92vh);
+  min-width: 520px;
+  min-height: 520px;
+  /* Kept below .video-stage's z-index so that when the two visually
+     overlap (narrower windows especially), the video's clickable
+     area always wins in the overlap region rather than the model's
+     bounding box silently intercepting clicks meant for the video. */
+  z-index: 3;
+  overflow: hidden;
+}
+
+/* Priest/Skill specifically sits another 10% higher than every other
+   class/mode (5vh + 10vh = 15vh) -- add more overrides like this one
+   (targeting [data-class="..."][data-mode="..."] .model-stage) if
+   other specific combinations ever need their own nudge. */
+[data-class="priest"][data-mode="skill"] .model-stage {
+  bottom: 15vh;
+}
+
+.race-model {
+  width: 100%;
+  height: 100%;
+  /* camera-target="0m 1m 0m" on the <model-viewer> element re-centers
+     the framing around that point instead of the model's own bounding
+     box, which is what pulled the character back toward the vertical
+     middle of the box instead of sitting bottom-anchored. Since
+     .model-stage below has overflow: hidden, shifting the whole
+     rendered canvas down by a percentage of its own height crops the
+     newly-exposed empty space at the bottom and reveals more of the
+     (now correctly positioned) character instead -- I can't preview
+     WebGL output here, so this percentage is a starting guess; nudge
+     it up or down (in 5% steps) until the framing looks right for
+     your camera-target value. */
+  transform: translateY(30%);
+  --poster-color: transparent;
+  background-color: transparent;
+  /* Hides model-viewer's built-in loading progress bar -- we already
+     show our own custom placeholder (.model-placeholder) while a
+     model is loading or missing, so the default one is redundant and
+     was showing up as a dark bar at the top of the model area. */
+  --progress-bar-height: 0px;
+  --progress-bar-color: transparent;
+}
+
+.model-placeholder {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed rgba(205, 166, 90, 0.5);
+  border-radius: 8px;
+  background: rgba(10, 8, 6, 0.25);
+  text-align: center;
+  padding: 20px;
+}
+
+.model-placeholder.visible {
+  display: flex;
+}
+
+.placeholder-glyph {
+  font-size: 2rem;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+.model-placeholder p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gold);
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+#placeholderPath {
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+/* ----- Right side: elegant lore panel ----- */
+
+.lore-panel {
+  position: absolute;
+  /* Fixed position rather than tied to the model box -- once the
+     model got much bigger and bottom-anchored, aligning to its top
+     edge pushed this panel up into the icon row. This value places
+     it comfortably below the icon row instead. */
+  top: 17vh;
+  right: 4vw;
+  width: min(560px, 34vw);
+  min-width: 320px;
+  z-index: 6;
+}
+
+.lore-name-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 14px;
+}
+
+.lore-name {
+  margin: 0;
+  font-family: "Jost", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 2.4vw, 2.4rem);
+  letter-spacing: 0.02em;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+/* Shown on class/mode entries with multiple interchangeable profiles
+   (see "variants" in CLASS_DATA) -- clicking the name cycles between
+   them. Purely a hint via cursor + title tooltip, no visual change to
+   the text itself so it doesn't look different from a normal name
+   until you actually hover it. */
+/* Shown on class/mode entries with multiple interchangeable profiles
+   (see "variants" in CLASS_DATA, e.g. Shaman/Fun's Cabbarnuke and
+   Unbreakable) -- the header shows every name joined by "/", with the
+   currently active one at full brightness and the rest dimmed.
+   Clicking a name switches to it, fading the emphasis across via the
+   opacity/color transition rather than replacing the text outright. */
+.variant-option {
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 400ms ease;
+}
+
+.variant-option.active {
+  opacity: 1;
+}
+
+.variant-option:hover {
+  opacity: 0.7;
+}
+
+.variant-option.active:hover {
+  opacity: 1;
+}
+
+.variant-sep {
+  opacity: 0.5;
+  margin: 0 2px;
+  pointer-events: none;
+}
+
+/* ---- Morpheus font for the lore text -----------------------------
+   Everything else on the site uses "Jost"; .lore-text specifically
+   uses "Morpheus" instead. This expects a file at fonts/Morpheus.ttf
+   -- if that file is missing or 404s, .lore-text falls back to the
+   generic "serif" in its font stack rather than breaking. ---- */
+
+@font-face {
+  font-family: "Morpheus";
+  src: url("fonts/Morpheus.ttf") format("truetype");
+  font-display: swap;
+}
+
+
+.lore-text {
+  margin: 0;
+  font-family: "Morpheus", serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: clamp(1.4rem, 1.9vw, 2rem);
+  line-height: 1.65;
+  color: var(--parchment);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+/* Movie-trailer-style critic score, shown when a lore string ends
+   with a trailing "X/10" rating (see renderLore() in script.js). */
+.lore-rating {
+  margin: 0;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-family: "Jost", sans-serif;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.rating-stars {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+
+.star {
+  display: inline-block;
+  color: rgba(236, 224, 196, 0.25);
+}
+
+.star-full {
+  color: #ffd76a;
+}
+
+/* Half-filled star: a gold-to-transparent gradient clipped to the
+   star glyph's own shape, split exactly down the middle. */
+.star-half {
+  background: linear-gradient(
+    90deg,
+    #ffd76a 0%,
+    #ffd76a 50%,
+    rgba(236, 224, 196, 0.25) 50%,
+    rgba(236, 224, 196, 0.25) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.rating-score {
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.rating-outof {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.75;
+  margin-left: 2px;
+}
+
+@media (max-width: 860px) {
+  .lore-panel {
+    position: static;
+    bottom: auto;
+    width: 85vw;
+    margin: 12px auto 0;
+    text-align: center;
+  }
+  .lore-rating {
+    justify-content: center;
+  }
+  .lore-name-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .video-stage {
+    position: static;
+    width: min(400px, 85vw);
+    margin: 14px auto 0;
+  }
+}
+
+/* ----- Embedded video (left side) -----------------------------------
+   Faded out by default; brightens on hover, and stays bright while
+   actually playing (the ".playing" class is toggled by script.js via
+   the YouTube IFrame API's onStateChange event) even if the mouse
+   isn't over it anymore. */
+
+.video-stage {
+  position: absolute;
+  top: 25vh;
+  left: 4vw;
+  width: min(560px, 32vw);
+  aspect-ratio: 16 / 9;
+  z-index: 4;
+  opacity: 0.32;
+  transition: opacity 400ms ease;
+  border: 1px solid rgba(210, 212, 218, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.video-stage:hover,
+.video-stage.playing {
+  opacity: 1;
+}
+
+.video-stage iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.video-missing {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  font-family: "Jost", sans-serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.video-missing.visible {
+  display: flex;
+}
+
+/* ----- Bottom-center identity panel: shorter flavor text ----- */
+
+.identity-panel {
+  position: absolute;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(480px, 70vw);
+  z-index: 6;
+}
+
+.class-text {
+  margin: 0;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--parchment);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+}
+
+/* ----- "Honorable Mentions" button (bottom-center of main scene) ----- */
+
+.honorable-btn {
+  position: absolute;
+  bottom: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  font-family: "Jost", sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: var(--parchment);
+  background: rgba(20, 16, 11, 0.55);
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  padding: 8px 18px;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 150ms ease, background 150ms ease;
+}
+
+.honorable-btn:hover {
+  opacity: 1;
+  background: rgba(156, 122, 60, 0.28);
+}
+
+/* ----- Honorable Mentions scene -------------------------------------
+   Mirrored left/right around a central vertical column of the same 9
+   class icons: "Fun" header + list on the left, "Skill" header + list
+   on the right. */
+
+.honorable-header {
+  position: absolute;
+  top: 4vh;
+  margin: 0;
+  font-family: "Jost", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 3vw, 2.75rem);
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+}
+
+.honorable-header-fun {
+  left: 4vw;
+}
+
+.honorable-header-skill {
+  right: 4vw;
+}
+
+.honorable-icon-column {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2;
+}
+
+.honorable-class-btn {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 13px;
+  padding: 5px 13px 5px 5px;
+  cursor: pointer;
+  opacity: 0.6;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  border: none;
+  outline: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+/* Honorable Mentions' icons/labels are ~25% bigger than the main
+   screen's, scoped here so the main screen's class-grid is unaffected
+   even though both reuse the same .class-icon/.class-label classes. */
+.honorable-icon-column .class-icon {
+  width: 50px;
+  height: 50px;
+}
+
+.honorable-icon-column .class-label {
+  font-size: 1.06rem;
+}
+
+.honorable-class-btn:hover {
+  opacity: 0.9;
+}
+
+.honorable-class-btn.active {
+  opacity: 1;
+}
+
+.honorable-class-btn.active .class-icon {
+  border-color: var(--gold-bright);
+  animation: class-icon-glow 1.8s ease-in-out infinite alternate;
+}
+
+.honorable-class-btn.active .class-label {
+  color: var(--gold-bright);
+}
+
+.honorable-class-btn .class-label {
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.honorable-list {
+  position: absolute;
+  top: 14vh;
+  bottom: 8vh;
+  max-width: min(450px, 27vw);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Each .honorable-entry-box gets an explicit width set by JS
+     (see renderHonorableList in script.js) rather than relying on a
+     shared grid column, so expanding one entry for its video can
+     grow just that box without dragging every other box in the list
+     along with it. */
+  gap: 10px;
+  padding-right: 8px;
+}
+
+.honorable-list-fun {
+  left: 4vw;
+}
+
+.honorable-list-skill {
+  right: 4vw;
+}
+
+.honorable-placeholder {
+  font-family: "Jost", sans-serif;
+  font-style: italic;
+  font-size: 1.5rem;
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+/* Free-flowing text next to the lists, for classes with a "note" set
+   in HONORABLE_MENTIONS (currently Rogue and Mage). "top" and "left"
+   are set as inline styles by script.js to match the icon's own row
+   in the vertical column (see alignNoteWithIcon()) -- top-anchored so
+   the text grows downward as it's typed rather than expanding upward
+   from a vertical center. Hidden entirely (via JS toggling
+   ".visible") for classes without a note. */
+.honorable-note {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(400px, 30vw);
+  margin: 0;
+  text-align: left;
+  font-family: "Jost", sans-serif;
+  font-style: italic;
+  font-size: 1.53rem;
+  line-height: 1.6;
+  color: var(--parchment);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95);
+  z-index: 2;
+}
+
+.honorable-note.visible {
+  display: block;
+}
+
+/* Blinking cursor at the end of the text while it's "typing" (see
+   .typing-cursor toggled in script.js) and briefly after, mimicking a
+   typewriter. */
+.honorable-note.typing::after {
+  content: "|";
+  margin-left: 2px;
+  animation: honorable-cursor-blink 0.8s step-start infinite;
+}
+
+@keyframes honorable-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.honorable-entry-box {
+  position: relative;
+  border: 1px solid rgba(210, 212, 218, 0.3);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.honorable-entry-name {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  font-family: "Jost", sans-serif;
+  font-weight: 600;
+  font-size: 1.19rem;
+  color: var(--parchment);
+  background: none;
+  border: none;
+  padding: 0 15px;
+  cursor: pointer;
+}
+
+.honorable-entry-name:hover {
+  color: var(--gold-bright);
+}
+
+/* Free-floating video slot -- genuinely unstyled (no border,
+   background, or shadow), positioned via inline "top"/"left"/"right"
+   set in JS (see showVideoOverlay in script.js) to sit right next to
+   whichever entry was clicked. Being a single top-level element
+   outside the scrollable lists means it can never be clipped by a
+   list's own overflow, and expanding/collapsing it never affects any
+   entry's position. */
+.honorable-video-overlay {
+  display: none;
+  position: fixed;
+  width: 350px;
+  height: 198px;
+  z-index: 20;
+}
+
+.honorable-video-overlay.visible {
+  display: block;
+}
+
+.honorable-video-overlay iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.honorable-back-btn {
+  position: absolute;
+  top: 4vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: "Jost", sans-serif;
+  font-size: 1.06rem;
+  letter-spacing: 0.05em;
+  color: var(--parchment);
+  background: rgba(20, 16, 11, 0.55);
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  padding: 10px 22px;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 150ms ease, background 150ms ease;
+  z-index: 3;
+}
+
+.honorable-back-btn:hover {
+  opacity: 1;
+  background: rgba(156, 122, 60, 0.28);
+}
+
+@media (max-width: 860px) {
+  .honorable-header {
+    position: static;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .honorable-icon-column {
+    position: static;
+    transform: none;
+    margin: 12px auto;
+    align-items: center;
+  }
+  .honorable-list {
+    position: static;
+    width: 90vw;
+    margin: 0 auto 12px;
+    max-height: 22vh;
+  }
+  .honorable-note {
+    position: static;
+    transform: none;
+    width: 90vw;
+    margin: 0 auto 12px;
+  }
+  .honorable-scene {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0 70px;
+  }
+  .honorable-back-btn {
+    position: fixed;
+  }
+}
+
+/* ----- Small screens ----- */
+
+@media (max-width: 860px) {
+  .control-column {
+    left: 50%;
+    top: 2vh;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+  .class-btn {
+    width: 52px;
+    height: 60px;
+  }
+  .class-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .model-stage {
+    width: min(640px, 92vw);
+    height: min(640px, 68vh);
+    min-width: 300px;
+    min-height: 300px;
+    bottom: 0;
+  }
+  .identity-panel {
+    bottom: 22vh;
+    width: 85vw;
+  }
+}
+
+/* ----- Main screen: tint the big character name header (e.g. "Bobo",
+   "Arthus") to match the currently selected class's official WoW
+   color, instead of the fixed gold used everywhere else. */
+body[data-class="warrior"] .lore-name {
+  color: #C69B6D;
+}
+
+body[data-class="paladin"] .lore-name {
+  color: #F48CBA;
+}
+
+body[data-class="hunter"] .lore-name {
+  color: #AAD372;
+}
+
+body[data-class="rogue"] .lore-name {
+  color: #FFF468;
+}
+
+body[data-class="priest"] .lore-name {
+  color: #FFFFFF;
+}
+
+body[data-class="shaman"] .lore-name {
+  color: #0070DD;
+}
+
+body[data-class="mage"] .lore-name {
+  color: #3FC7EB;
+}
+
+body[data-class="warlock"] .lore-name {
+  color: #8788EE;
+}
+
+body[data-class="druid"] .lore-name {
+  color: #FF7C0A;
+}
