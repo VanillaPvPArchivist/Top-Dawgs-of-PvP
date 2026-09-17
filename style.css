@@ -1034,7 +1034,7 @@ body.honorable-open .honorable-scene {
   display: none;
   position: fixed;
   width: 560px;
-  height: auto;
+  height: 32vw;
   z-index: 20;
 }
 
