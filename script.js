@@ -109,7 +109,7 @@
     rogue: {
       skill: [{ name: "Dahis", lore: "", video: "VMCDsXwAEK8" }, { name: "Corrupt", lore: "", video: "CkRIrlmQRYQ" }, { name: "Ming", lore: "", video: "aDXXr3ad3is" }, { name: "Happyminti", lore: "", video: "YvQoYMq8_Ng" }, { name: "Oozo", lore: "", video: "1C7Uvt_0oYs" }],
       fun: [{ name: "Caen", lore: "", video: "CGZiwuUPFMo" }, { name: "Perkulator ", lore: "", video: "ID192rw5Whw" }, { name: "Grim", lore: "", video: "oWNt_8xcOZw" }],
-      note: ""
+      note: "Each rogue has moments where they shine brighter than the others, we just had to pick one"
     },
     priest: {
       skill: [],
