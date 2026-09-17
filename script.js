@@ -444,7 +444,7 @@
     if (!window.YT || !window.YT.Player || !document.getElementById("videoFrame")) return;
 
     ytPlayer = new YT.Player("videoFrame", {
-      host: "https://www.youtube-nocookie.com",
+      host: "https://www.youtube-nocookie.com/embed/${videoId}?rel=0",
       playerVars: {
         rel: 0,
         modestbranding: 1,
