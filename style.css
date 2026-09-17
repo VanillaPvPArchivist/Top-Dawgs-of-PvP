@@ -495,7 +495,7 @@ body.honorable-open .honorable-scene {
    (targeting [data-class="..."][data-mode="..."] .model-stage) if
    other specific combinations ever need their own nudge. */
 [data-class="priest"][data-mode="skill"] .model-stage {
-  bottom: 15vh;
+  bottom: 4.7vh;
 }
 
 .race-model {
@@ -663,7 +663,7 @@ body.honorable-open .honorable-scene {
   gap: 14px;
   font-family: "Jost", sans-serif;
   color: var(--gold-bright);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 1);
 }
 
 .rating-stars {
@@ -1034,7 +1034,7 @@ body.honorable-open .honorable-scene {
   display: none;
   position: fixed;
   width: min(560px, 32vw);
-  aspect-ratio: 16 / 9;
+  height: min(315px, 18.5vw);
   z-index: 20;
 }
 
