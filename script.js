@@ -889,6 +889,12 @@
   // whenever playback actually manages to start rather than from
   // page load.
   // ---------------------------------------------------------------
+  const cursorImg = document.getElementById('customCursor');
+
+    window.addEventListener('mousemove', (e) => {
+        cursorImg.style.left = e.clientX + 'px';
+        cursorImg.style.top = e.clientY + 'px';
+    });
   const MUSIC_TARGET_VOLUME = 0.25;
   const MUSIC_FADE_IN_DELAY_MS = 1500;
   const MUSIC_FADE_IN_DURATION_MS = 4000;

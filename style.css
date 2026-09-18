@@ -1176,3 +1176,26 @@ body[data-class="warlock"] .lore-name {
 body[data-class="druid"] .lore-name {
   color: #FF7C0A;
 }
+/* The custom cursor container */
+.custom-cursor-img {
+    position: fixed;
+    pointer-events: none;
+    width: 500px;         
+    height: auto;
+    z-index: 9999;
+    transform: translate(15px, 15px);
+    
+    /* Hidden by default with absolutely NO transition (vanishes instantly) */
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* When the warrior button is hovered: apply the transition and the delay */
+#honorableIconColumn:has(button[data-class="warrior"]:hover) + .custom-cursor-img {
+    opacity: 1;
+    visibility: visible;
+    
+    /* The transition only lives here, so it only affects the "fade-in" */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition-delay: 6.7s; 
+}
