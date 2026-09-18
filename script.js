@@ -462,38 +462,40 @@
           if (!videoStage || !window.YT) return;
           const isPlaying = event.data === YT.PlayerState.PLAYING;
           videoStage.classList.toggle("playing", isPlaying);
-
-          // Auto-pause the background music while this video plays,
-          // and resume it once the video stops -- but only if the
-          // music was actually playing (and not paused for some other
-          // reason, e.g. the visitor's own pause button) when the
-          // video started. Resuming waits a beat rather than firing
-          // immediately: skipping through a video fires brief
-          // BUFFERING/PAUSED states between seeks, and without a
-          // delay the music would blip back in during every one of
-          // those instead of only when playback actually stops.
-          if (bgMusic) {
-            if (isPlaying) {
-              if (resumeMusicTimer) {
-                clearTimeout(resumeMusicTimer);
-                resumeMusicTimer = null;
-              }
-              if (!bgMusic.paused) {
-                bgMusic.pause();
-                pausedForVideo = true;
-              }
-            } else if (pausedForVideo) {
-              if (resumeMusicTimer) clearTimeout(resumeMusicTimer);
-              resumeMusicTimer = setTimeout(() => {
-                bgMusic.play().catch(() => {});
-                pausedForVideo = false;
-                resumeMusicTimer = null;
-              }, 3000);
-            }
-          }
+          duckMusicForVideoState(isPlaying);
         }
       }
     });
+  }
+
+  // Auto-pause the background music while ANY YouTube video plays
+  // (the main class-preview player or the Honorable Mentions overlay
+  // player), and resume it once that video stops -- but only if the
+  // music was actually playing (and not paused for some other reason,
+  // e.g. the visitor's own pause button) when the video started.
+  // Resuming waits a beat rather than firing immediately: skipping
+  // through a video fires brief BUFFERING/PAUSED states between
+  // seeks, and without a delay the music would blip back in during
+  // every one of those instead of only when playback actually stops.
+  function duckMusicForVideoState(isPlaying) {
+    if (!bgMusic) return;
+    if (isPlaying) {
+      if (resumeMusicTimer) {
+        clearTimeout(resumeMusicTimer);
+        resumeMusicTimer = null;
+      }
+      if (!bgMusic.paused) {
+        bgMusic.pause();
+        pausedForVideo = true;
+      }
+    } else if (pausedForVideo) {
+      if (resumeMusicTimer) clearTimeout(resumeMusicTimer);
+      resumeMusicTimer = setTimeout(() => {
+        bgMusic.play().catch(() => {});
+        pausedForVideo = false;
+        resumeMusicTimer = null;
+      }, 3000);
+    }
   }
 
   function loadYouTubeApi() {
@@ -773,6 +775,14 @@
   // Skill (mirrored, also opening toward the center).
   let currentVideoEntry = null;
   let currentVideoSide = null;
+  let honorableYtPlayer = null; // wraps the overlay video so its play state can be watched, same as the main player
+
+  function destroyHonorablePlayer() {
+    if (honorableYtPlayer && typeof honorableYtPlayer.destroy === "function") {
+      honorableYtPlayer.destroy();
+    }
+    honorableYtPlayer = null;
+  }
 
   function showVideoOverlay(entryEl, videoId, sideKey) {
     if (!honorableVideoOverlay || !honorableVideoFrame) return;
@@ -787,7 +797,30 @@
       honorableVideoOverlay.style.right = window.innerWidth - rect.left + 10 + "px";
       honorableVideoOverlay.style.left = "auto";
     }
-    honorableVideoFrame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?rel=0" title="Honorable mention video" frameborder="0" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+
+    destroyHonorablePlayer();
+
+    if (window.YT && window.YT.Player) {
+      // Wrapped in a real YT.Player (like the main preview video)
+      // rather than a plain <iframe> so onStateChange fires and the
+      // background music ducking logic can react to it.
+      honorableVideoFrame.innerHTML = `<div id="honorableVideoPlayer"></div>`;
+      honorableYtPlayer = new YT.Player("honorableVideoPlayer", {
+        host: "https://www.youtube-nocookie.com",
+        videoId: videoId,
+        playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onStateChange: (event) => {
+            duckMusicForVideoState(event.data === YT.PlayerState.PLAYING);
+          }
+        }
+      });
+    } else {
+      // API not ready yet -- fall back to a plain iframe. Music won't
+      // auto-duck in this rare case since there's no state to watch.
+      honorableVideoFrame.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?rel=0" title="Honorable mention video" frameborder="0" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    }
+
     honorableVideoOverlay.classList.add("visible");
   }
 
@@ -796,7 +829,9 @@
     currentVideoEntry = null;
     currentVideoSide = null;
     honorableVideoOverlay.classList.remove("visible");
+    destroyHonorablePlayer();
     honorableVideoFrame.innerHTML = ""; // stops playback, not just visually hides it
+    duckMusicForVideoState(false); // in case it was mid-play when closed, let music resume
   }
 
   // Expand/collapse entries via event delegation, since the list
