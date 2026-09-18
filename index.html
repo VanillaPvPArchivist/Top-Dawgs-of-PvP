@@ -261,9 +261,14 @@
           <span class="class-label">Druid</span>
         </button>
       </div>
-    </div>
 
-    <img src="images/WARRIOR.png" alt="Cursor Follower" class="custom-cursor-img" id="customCursor">
+      <!-- Must stay the icon row's immediate next sibling -- the
+           warrior-hover cursor trick in style.css targets it with
+           "#honorableIconColumn + .custom-cursor-img", and being
+           position:fixed it's removed from normal flow anyway, so
+           it doesn't disturb the icon row's flex layout. -->
+      <img src="images/WARRIOR.png" alt="Cursor Follower" class="custom-cursor-img" id="customCursor">
+    </div>
 
     <button type="button" class="honorable-back-btn" id="honorableBackBtn">Back</button>
 
