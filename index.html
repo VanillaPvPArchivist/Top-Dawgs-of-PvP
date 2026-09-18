@@ -185,71 +185,87 @@
        "Fun" entries on the left, "Skill" entries on the right. -->
   <div class="honorable-scene" id="honorableScene">
 
-    <h2 class="honorable-header honorable-header-fun">Fun</h2>
-    <h2 class="honorable-header honorable-header-skill">Skill</h2>
-
-    <div class="honorable-icon-column" id="honorableIconColumn" role="group" aria-label="Choose a class">
-      <button type="button" class="honorable-class-btn" data-class="warrior">
-        <span class="class-icon"><img src="icons/classicon_warrior.png" alt="Warrior"></span>
-        <span class="class-label">Warrior</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="paladin">
-        <span class="class-icon"><img src="icons/classicon_paladin.png" alt="Paladin"></span>
-        <span class="class-label">Paladin</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="hunter">
-        <span class="class-icon"><img src="icons/classicon_hunter.png" alt="Hunter"></span>
-        <span class="class-label">Hunter</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="rogue">
-        <span class="class-icon"><img src="icons/classicon_rogue.png" alt="Rogue"></span>
-        <span class="class-label">Rogue</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="priest">
-        <span class="class-icon"><img src="icons/classicon_priest.png" alt="Priest"></span>
-        <span class="class-label">Priest</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="shaman">
-        <span class="class-icon"><img src="icons/classicon_shaman.png" alt="Shaman"></span>
-        <span class="class-label">Shaman</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="mage">
-        <span class="class-icon"><img src="icons/classicon_mage.png" alt="Mage"></span>
-        <span class="class-label">Mage</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="warlock">
-        <span class="class-icon"><img src="icons/classicon_warlock.png" alt="Warlock"></span>
-        <span class="class-label">Warlock</span>
-      </button>
-      <button type="button" class="honorable-class-btn" data-class="druid">
-        <span class="class-icon"><img src="icons/classicon_druid.png" alt="Druid"></span>
-        <span class="class-label">Druid</span>
-      </button>
-    </div>
-    <img src="images/WARRIOR.png" alt="Cursor Follower" class="custom-cursor-img" id="customCursor">
-
+    <!-- "Fun" (left) and its name list -- both horizontally centered,
+         via JS, in the gap between the screen's left edge and the
+         icon row's left edge (see positionSideLabels in script.js).
+         The list sits directly above its label and grows upward as
+         more entries are added, since it's bottom-anchored with no
+         fixed height. -->
+    <h2 class="honorable-header honorable-header-fun" id="honorableHeaderFun">Fun</h2>
     <div class="honorable-list honorable-list-fun" id="honorableListFun">
       <p class="honorable-placeholder">Select a class to see its honorable mentions.</p>
     </div>
+
+    <!-- "Skill" (right), mirrored the same way. -->
+    <h2 class="honorable-header honorable-header-skill" id="honorableHeaderSkill">Skill</h2>
     <div class="honorable-list honorable-list-skill" id="honorableListSkill">
       <p class="honorable-placeholder">Select a class to see its honorable mentions.</p>
     </div>
 
-    <!-- Free-flowing text shown next to the lists, only for classes
-         that have a "note" set in HONORABLE_MENTIONS (currently just
-         Rogue and Mage). Hidden entirely for classes without one. -->
-    <p class="honorable-note" id="honorableNote"></p>
+    <!-- Bottom-center stack: the class icon row anchored to the
+         bottom of the screen, with the class-level note box directly
+         above it, and the (optional) video slot above that -- normal
+         document flow inside a bottom-anchored flex column, so
+         showing/hiding the note or video just pushes the stack
+         taller rather than needing any position math. -->
+    <div class="honorable-bottom-stack" id="honorableBottomStack">
+
+      <!-- Single shared video slot -- only ever shows the entry that
+           was just clicked (see showVideoOverlay in script.js).
+           Empty/hidden until then, so nothing loads or autoplays
+           until an entry with a video is actually opened. -->
+      <div class="honorable-video-overlay" id="honorableVideoOverlay">
+        <div id="honorableVideoFrame"></div>
+      </div>
+
+      <!-- Shown only for classes that have a "note" set in
+           HONORABLE_MENTIONS (currently just Rogue and Mage). Hidden
+           entirely for classes without one. -->
+      <p class="honorable-note" id="honorableNote"></p>
+
+      <div class="honorable-icon-column" id="honorableIconColumn" role="group" aria-label="Choose a class">
+        <button type="button" class="honorable-class-btn" data-class="warrior">
+          <span class="class-icon"><img src="icons/classicon_warrior.png" alt="Warrior"></span>
+          <span class="class-label">Warrior</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="paladin">
+          <span class="class-icon"><img src="icons/classicon_paladin.png" alt="Paladin"></span>
+          <span class="class-label">Paladin</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="hunter">
+          <span class="class-icon"><img src="icons/classicon_hunter.png" alt="Hunter"></span>
+          <span class="class-label">Hunter</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="rogue">
+          <span class="class-icon"><img src="icons/classicon_rogue.png" alt="Rogue"></span>
+          <span class="class-label">Rogue</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="priest">
+          <span class="class-icon"><img src="icons/classicon_priest.png" alt="Priest"></span>
+          <span class="class-label">Priest</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="shaman">
+          <span class="class-icon"><img src="icons/classicon_shaman.png" alt="Shaman"></span>
+          <span class="class-label">Shaman</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="mage">
+          <span class="class-icon"><img src="icons/classicon_mage.png" alt="Mage"></span>
+          <span class="class-label">Mage</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="warlock">
+          <span class="class-icon"><img src="icons/classicon_warlock.png" alt="Warlock"></span>
+          <span class="class-label">Warlock</span>
+        </button>
+        <button type="button" class="honorable-class-btn" data-class="druid">
+          <span class="class-icon"><img src="icons/classicon_druid.png" alt="Druid"></span>
+          <span class="class-label">Druid</span>
+        </button>
+      </div>
+    </div>
+
+    <img src="images/WARRIOR.png" alt="Cursor Follower" class="custom-cursor-img" id="customCursor">
 
     <button type="button" class="honorable-back-btn" id="honorableBackBtn">Back</button>
-
-    <!-- Single shared, unstyled video slot -- JS positions it next to
-         whichever entry was just clicked (see showVideoOverlay in
-         script.js) rather than nesting a video inside each entry,
-         which avoids clipping/overflow issues entirely since this
-         isn't nested inside the scrollable lists at all. -->
-    <div class="honorable-video-overlay" id="honorableVideoOverlay">
-      <div id="honorableVideoFrame"></div>
-    </div>
 
   </div>
 

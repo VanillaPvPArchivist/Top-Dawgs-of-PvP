@@ -832,13 +832,20 @@ body.honorable-open .honorable-scene {
 }
 
 /* ----- Honorable Mentions scene -------------------------------------
-   Mirrored left/right around a central vertical column of the same 9
-   class icons: "Fun" header + list on the left, "Skill" header + list
-   on the right. */
+   Bottom-anchored: a horizontal row of the same 9 class icons sits at
+   the bottom center, with the class-level note box and (optional)
+   video slot stacked directly above it (see .honorable-bottom-stack).
+   "Fun" and its name list sit to the left of the icon row, "Skill"
+   and its list mirrored on the right -- both horizontally centered,
+   via JS, in the gap between the icon row and their edge of the
+   screen (see positionSideLabels() in script.js), and both
+   bottom-anchored so the name list grows upward above its label as
+   entries are added. */
 
 .honorable-header {
-  position: absolute;
-  top: 4vh;
+  position: fixed;
+  bottom: 2.6vh;
+  left: 0; /* overridden by positionSideLabels() in script.js */
   margin: 0;
   font-family: "Jost", sans-serif;
   font-weight: 700;
@@ -846,34 +853,36 @@ body.honorable-open .honorable-scene {
   letter-spacing: 0.04em;
   color: var(--gold-bright);
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  transform: translateX(-50%);
+  z-index: 4;
 }
 
-.honorable-header-fun {
-  left: 4vw;
-}
-
-.honorable-header-skill {
-  right: 4vw;
+.honorable-bottom-stack {
+  position: absolute;
+  left: 50%;
+  bottom: 2.6vh;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 5;
 }
 
 .honorable-icon-column {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 2;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .honorable-class-btn {
   position: relative;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: 13px;
-  padding: 5px 13px 5px 5px;
+  gap: 4px;
+  padding: 4px;
   cursor: pointer;
   opacity: 0.6;
   appearance: none;
@@ -884,16 +893,18 @@ body.honorable-open .honorable-scene {
   transition: opacity 150ms ease, transform 150ms ease;
 }
 
-/* Honorable Mentions' icons/labels are ~25% bigger than the main
-   screen's, scoped here so the main screen's class-grid is unaffected
-   even though both reuse the same .class-icon/.class-label classes. */
+/* Honorable Mentions' icons are a bit smaller than the main screen's
+   to fit nine of them comfortably in one row, scoped here so the
+   main screen's class-grid is unaffected even though both reuse the
+   same .class-icon/.class-label classes. */
 .honorable-icon-column .class-icon {
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
 }
 
 .honorable-icon-column .class-label {
-  font-size: 1.06rem;
+  font-size: 0.68rem;
+  text-align: center;
 }
 
 .honorable-class-btn:hover {
@@ -913,68 +924,61 @@ body.honorable-open .honorable-scene {
   color: var(--gold-bright);
 }
 
-.honorable-class-btn .class-label {
-  font-size: 0.85rem;
-  text-align: left;
-}
-
 .honorable-list {
-  position: absolute;
-  top: 14vh;
-  bottom: 8vh;
-  max-width: min(450px, 27vw);
+  position: fixed;
+  left: 0; /* overridden by positionSideLabels() in script.js */
+  bottom: calc(2.6vh + 74px); /* just above the Fun/Skill header */
+  max-width: min(360px, 26vw);
+  max-height: 62vh;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   /* Each .honorable-entry-box gets an explicit width set by JS
      (see renderHonorableList in script.js) rather than relying on a
      shared grid column, so expanding one entry for its video can
      grow just that box without dragging every other box in the list
-     along with it. */
+     along with it. No top/height is set here beyond max-height, so
+     as entries are added the list's own top edge simply moves up --
+     it grows upward from the label rather than downward from a fixed
+     top. */
   gap: 10px;
-  padding-right: 8px;
-}
-
-.honorable-list-fun {
-  left: 4vw;
-}
-
-.honorable-list-skill {
-  right: 4vw;
+  padding: 2px 4px;
+  transform: translateX(-50%);
+  z-index: 3;
 }
 
 .honorable-placeholder {
   font-family: "Jost", sans-serif;
   font-style: italic;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: var(--gold);
   opacity: 0.8;
+  text-align: center;
 }
 
-/* Free-flowing text next to the lists, for classes with a "note" set
-   in HONORABLE_MENTIONS (currently Rogue and Mage). "top" and "left"
-   are set as inline styles by script.js to match the icon's own row
-   in the vertical column (see alignNoteWithIcon()) -- top-anchored so
-   the text grows downward as it's typed rather than expanding upward
-   from a vertical center. Hidden entirely (via JS toggling
-   ".visible") for classes without a note. */
+/* The class-level note, for classes with a "note" set in
+   HONORABLE_MENTIONS (currently Rogue and Mage) -- a darker box
+   centered above the icon row, shown via JS toggling ".visible".
+   Hidden entirely for classes without a note, and since it's a
+   normal flex child of .honorable-bottom-stack, hiding it just lets
+   the stack shrink rather than leaving an empty gap. */
 .honorable-note {
   display: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: min(400px, 30vw);
   margin: 0;
-  text-align: left;
+  max-width: min(480px, 60vw);
+  padding: 14px 22px;
+  text-align: center;
   font-family: "Jost", sans-serif;
   font-style: italic;
-  font-size: 1.53rem;
-  line-height: 1.6;
+  font-size: 1.28rem;
+  line-height: 1.55;
   color: var(--parchment);
+  background: rgba(10, 8, 6, 0.55);
+  border: 1px solid rgba(210, 212, 218, 0.25);
+  border-radius: 4px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95);
-  z-index: 2;
 }
 
 .honorable-note.visible {
@@ -1023,28 +1027,31 @@ body.honorable-open .honorable-scene {
   color: var(--gold-bright);
 }
 
-/* Free-floating video slot -- genuinely unstyled (no border,
-   background, or shadow), positioned via inline "top"/"left"/"right"
-   set in JS (see showVideoOverlay in script.js) to sit right next to
-   whichever entry was clicked. Being a single top-level element
-   outside the scrollable lists means it can never be clipped by a
-   list's own overflow, and expanding/collapsing it never affects any
-   entry's position. */
+.honorable-entry.expanded .honorable-entry-name {
+  color: var(--gold-bright);
+}
+
+/* Single shared video slot, centered in .honorable-bottom-stack above
+   the note box. Hidden (and empty -- see hideVideoOverlay in
+   script.js) until an entry with a video is clicked, so nothing
+   loads or autoplays before then. */
 .honorable-video-overlay {
-  display: block;
-  position: fixed;
-  width: min(560px);
-  height: 500px !important;
-  z-index: 20;
+  display: none;
+  width: min(560px, 80vw);
 }
 
 .honorable-video-overlay.visible {
   display: block;
 }
 
-.honorable-video-overlay iframe {
+#honorableVideoFrame {
   width: 100%;
-  height: 320px;
+  height: 300px;
+}
+
+#honorableVideoFrame iframe {
+  width: 100%;
+  height: 100%;
   border: none;
   display: block;
 }
@@ -1074,28 +1081,41 @@ body.honorable-open .honorable-scene {
 }
 
 @media (max-width: 860px) {
+  /* The desktop layout leans entirely on JS-computed horizontal
+     centering and bottom-anchoring, which doesn't suit a narrow
+     screen -- everything falls back to plain top-to-bottom document
+     flow instead: each header directly above its own list, then the
+     icon row/note/video stack, matching the order in index.html. */
   .honorable-header {
     position: static;
     text-align: center;
-    margin-top: 12px;
-  }
-  .honorable-icon-column {
-    position: static;
+    margin: 12px auto 4px;
     transform: none;
-    margin: 12px auto;
-    align-items: center;
   }
   .honorable-list {
     position: static;
     width: 90vw;
+    max-width: none;
     margin: 0 auto 12px;
     max-height: 22vh;
+    transform: none;
   }
-  .honorable-note {
+  .honorable-bottom-stack {
     position: static;
     transform: none;
+    margin: 12px auto;
+  }
+  .honorable-icon-column {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .honorable-note {
     width: 90vw;
-    margin: 0 auto 12px;
+    max-width: none;
+    margin: 0 auto;
+  }
+  .honorable-video-overlay {
+    width: 90vw;
   }
   .honorable-scene {
     overflow-y: auto;

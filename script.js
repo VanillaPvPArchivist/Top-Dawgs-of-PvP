@@ -19,6 +19,8 @@
   const honorableClassButtons = document.querySelectorAll(".honorable-class-btn");
   const honorableListFun = document.getElementById("honorableListFun");
   const honorableListSkill = document.getElementById("honorableListSkill");
+  const honorableHeaderFun = document.getElementById("honorableHeaderFun");
+  const honorableHeaderSkill = document.getElementById("honorableHeaderSkill");
   const honorableNote = document.getElementById("honorableNote");
   const honorableVideoOverlay = document.getElementById("honorableVideoOverlay");
   const honorableVideoFrame = document.getElementById("honorableVideoFrame");
@@ -699,65 +701,42 @@
     }, 23);
   }
 
-  // Positions the note to start at the same row as the given class's
-  // own icon in the vertical column, immediately to its right --
-  // "next to the icon" rather than centered on screen. Top-anchored
-  // (not vertically centered) so multi-line text grows downward from
-  // that row instead of expanding upward over the icons above it.
-  // Positions the note to the right of the given class's icon -- the
-  // note is purely class-level now (lore no longer varies by side
-  // since it's always shown on class selection, not tied to a
-  // specific Fun/Skill entry click).
-  // Classes whose note should open to the left of the icon instead of
-  // the default right -- add more class names here if others need it.
-  const NOTE_ON_LEFT = new Set(["hunter"]);
-
-  function alignNoteWithIcon(className) {
-    if (!honorableNote) return;
-    const iconBtn = document.querySelector(`.honorable-class-btn[data-class="${className}"]`);
-    if (!iconBtn) return;
-    const rect = iconBtn.getBoundingClientRect();
-    honorableNote.style.top = rect.top + "px";
-    if (NOTE_ON_LEFT.has(className)) {
-      honorableNote.style.left = "auto";
-      honorableNote.style.right = window.innerWidth - rect.left + 20 + "px";
-    } else {
-      honorableNote.style.right = "auto";
-      honorableNote.style.left = rect.right + 20 + "px";
-    }
-  }
-
-  // Aligns the icon column's left edge with the "Back" button's left
-  // edge, rather than keeping the column horizontally centered. The
-  // back button's own width depends on its text/padding, so this is
-  // computed in JS rather than hardcoded -- getBoundingClientRect()
-  // works correctly even while the scene is translated off-screen,
-  // since that transform is vertical only and doesn't affect x
-  // coordinates.
-  function alignIconColumnWithBack() {
-    const iconColumn = document.getElementById("honorableIconColumn");
-    if (!iconColumn || !honorableBackBtn) return;
-    const rect = honorableBackBtn.getBoundingClientRect();
-    iconColumn.style.left = rect.left + "px";
-    iconColumn.style.transform = "translateY(-50%)";
-  }
-
-  // Shows the given class's own "note" (if it has one) in the shared
-  // note slot next to the icon column -- this is the default state,
-  // shown whenever no honorable-mention entry's lore is currently
-  // overriding it (see the expand/collapse handler below).
+  // The note is now a single "darker box" that sits centered above
+  // the (horizontal) icon row rather than next to each icon
+  // individually, so showing/hiding it is just a class toggle -- no
+  // per-icon position math needed any more.
   function showClassNote(className) {
     const data = HONORABLE_MENTIONS[className];
     if (!honorableNote || !data) return;
     stopTypewriter();
     if (data.note) {
-      alignNoteWithIcon(className);
       honorableNote.classList.add("visible");
       typeWriterEffect(honorableNote, data.note);
     } else {
       honorableNote.textContent = "";
       honorableNote.classList.remove("visible", "typing");
     }
+  }
+
+  // The Fun/Skill headers and their name lists sit to either side of
+  // the (horizontally centered) icon row, each one centered in the
+  // leftover space between the icon row and its edge of the screen --
+  // e.g. the Fun header sits at the midpoint between the screen's
+  // left edge and the icon row's left edge. That midpoint depends on
+  // the icon row's actual rendered width, so it's computed in JS
+  // rather than hardcoded, the same way the old vertical layout
+  // aligned itself with the Back button's width.
+  function positionSideLabels() {
+    const iconColumn = document.getElementById("honorableIconColumn");
+    if (!iconColumn || !honorableHeaderFun || !honorableHeaderSkill) return;
+    const rect = iconColumn.getBoundingClientRect();
+    const funCenter = rect.left / 2;
+    const skillCenter = rect.right + (window.innerWidth - rect.right) / 2;
+
+    honorableHeaderFun.style.left = funCenter + "px";
+    honorableHeaderSkill.style.left = skillCenter + "px";
+    if (honorableListFun) honorableListFun.style.left = funCenter + "px";
+    if (honorableListSkill) honorableListSkill.style.left = skillCenter + "px";
   }
 
   function renderHonorableLists(className) {
@@ -769,12 +748,10 @@
     showClassNote(className);
   }
 
-  // Positions the shared, unstyled video slot right next to the given
-  // entry element -- to its right for Fun (which sits on the left of
-  // the screen, so this opens toward the center), or to its left for
-  // Skill (mirrored, also opening toward the center).
-  let currentVideoEntry = null;
-  let currentVideoSide = null;
+  // The video slot now lives centered in the bottom stack, directly
+  // above the note box, rather than positioned next to whichever
+  // entry was clicked -- so showing it is just a class toggle, same
+  // as the note.
   let honorableYtPlayer = null; // wraps the overlay video so its play state can be watched, same as the main player
 
   function destroyHonorablePlayer() {
@@ -784,19 +761,8 @@
     honorableYtPlayer = null;
   }
 
-  function showVideoOverlay(entryEl, videoId, sideKey) {
+  function showVideoOverlay(videoId) {
     if (!honorableVideoOverlay || !honorableVideoFrame) return;
-    currentVideoEntry = entryEl;
-    currentVideoSide = sideKey;
-    const rect = entryEl.getBoundingClientRect();
-    honorableVideoOverlay.style.top = rect.top + "px";
-    if (sideKey === "fun") {
-      honorableVideoOverlay.style.left = rect.right + 10 + "px";
-      honorableVideoOverlay.style.right = "auto";
-    } else {
-      honorableVideoOverlay.style.right = window.innerWidth - rect.left + 10 + "px";
-      honorableVideoOverlay.style.left = "auto";
-    }
 
     destroyHonorablePlayer();
 
@@ -826,8 +792,6 @@
 
   function hideVideoOverlay() {
     if (!honorableVideoOverlay || !honorableVideoFrame) return;
-    currentVideoEntry = null;
-    currentVideoSide = null;
     honorableVideoOverlay.classList.remove("visible");
     destroyHonorablePlayer();
     honorableVideoFrame.innerHTML = ""; // stops playback, not just visually hides it
@@ -863,7 +827,7 @@
       const entryData = HONORABLE_MENTIONS[currentHonorableClass] && HONORABLE_MENTIONS[currentHonorableClass][sideKey][index];
 
       if (entryData && entryData.video) {
-        showVideoOverlay(entry, entryData.video, sideKey);
+        showVideoOverlay(entryData.video);
       } else {
         hideVideoOverlay();
       }
@@ -881,28 +845,17 @@
     });
   });
 
-  function repositionVideoOverlay() {
-    if (!currentVideoEntry || !honorableVideoOverlay.classList.contains("visible")) return;
-    const rect = currentVideoEntry.getBoundingClientRect();
-    honorableVideoOverlay.style.top = rect.top + "px";
-    if (currentVideoSide === "fun") {
-      honorableVideoOverlay.style.left = rect.right + 10 + "px";
-    } else {
-      honorableVideoOverlay.style.right = window.innerWidth - rect.left + 10 + "px";
-    }
-  }
+  window.addEventListener("resize", positionSideLabels);
 
-  window.addEventListener("resize", () => {
-    if (currentHonorableClass) alignNoteWithIcon(currentHonorableClass);
-    alignIconColumnWithBack();
-    repositionVideoOverlay();
-  });
-
-  alignIconColumnWithBack();
+  positionSideLabels();
 
   if (honorableBtn) {
     honorableBtn.addEventListener("click", () => {
       body.classList.add("honorable-open");
+      // The icon row's width can shift slightly the first time the
+      // scene becomes visible (e.g. late-loading font), so recompute
+      // once the slide-in has had a frame to settle.
+      requestAnimationFrame(positionSideLabels);
     });
   }
 
