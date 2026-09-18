@@ -877,7 +877,32 @@
       hideVideoOverlay();
     });
   }
+// Throttle mechanism for the wheel event
+let isScrolling = false;
+const siteBody = document.body;
 
+window.addEventListener('wheel', (e) => {
+  // 1. Ignore tiny accidental movements (trackpad drift)
+  if (Math.abs(e.deltaY) < 10) return; 
+
+  // 2. Prevent the scroll from firing continuously
+  if (isScrolling) return;
+  isScrolling = true;
+
+  if (e.deltaY > 0) {
+    // Scrolling Up
+    siteBody.classList.add("honorable-open");
+  } else if (e.deltaY < 0) {
+    // Scrolling Down
+    siteBody.classList.remove("honorable-open");
+    hideVideoOverlay();
+  }
+
+  // 3. Reset the scroll lock after 500ms (adjust based on your CSS transition speed)
+  setTimeout(() => {
+    isScrolling = false;
+  }, 500);
+}, { passive: true });
   // ---------------------------------------------------------------
   // Background music. Starts silent, then fades in over a few
   // seconds once playback actually begins. Browsers generally block
