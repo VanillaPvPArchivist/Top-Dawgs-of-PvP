@@ -1205,7 +1205,7 @@ body[data-class="druid"] .lore-name {
     width: 500px;         
     height: auto;
     z-index: 9999;
-    transform: translate(15px, 15px);
+    transform: translate(15px, calc(-100% - 15px));
     
     /* Hidden by default with absolutely NO transition (vanishes instantly) */
     opacity: 0;
